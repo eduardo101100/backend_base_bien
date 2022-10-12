@@ -1,4 +1,5 @@
 const mariadb = require("mariadb")
+
 const config = {
 host: process.env.DB_HOST,
 user: process.env.DB_USER,
