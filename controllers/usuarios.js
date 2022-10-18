@@ -1,5 +1,6 @@
 const { request, response } = require("express");
 const pool = require("../db/connection")
+
 const getUsers = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD
     
@@ -25,4 +26,33 @@ const getUsers = async (req = request, res = response) =>{
         }
     }
 }
-module.exports = {getUsers}
+
+const getUserByID = async (req = request, res = response) =>{
+    //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
+    const {id} = req.params
+
+    let conn;
+    //control de exepciones
+    try {
+        conn = await pool.getConnection()
+        //esta es la consulta mas basica, se pueden hacer mas complejas
+        const [user] = await conn.query(`SELECT * FROM Usuarios WHERE ID = ${id}`, (error) => {throw new Error(error) })
+        //siempre validar que no se obtuvieron resultados
+        if (!user) {
+            res.status(404).json({msg:`no se encontro registro con el id ${id}`})
+            return
+        }
+        res.json({user})
+        //lo del cath y final siempre sera lo mismo
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error})
+    }finally{
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+module.exports = {getUsers, getUserByID}
