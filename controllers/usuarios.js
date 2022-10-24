@@ -54,5 +54,33 @@ const getUserByID = async (req = request, res = response) =>{
     }
 }
 
+const deleteUserByID = async (req = request, res = response) =>{
+    //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
+    const {id} = req.query
 
-module.exports = {getUsers, getUserByID}
+    let conn;
+    //control de exepciones
+    try {
+        conn = await pool.getConnection()
+        //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
+        const {affectedRows} = await conn.query(`UPDATE Usuarios SET Activo = 'N' WHERE ID = ${id}`, (error) => {throw new Error(error) })
+        
+        //siempre validar que no se obtuvieron resultados
+        if (affectedRows === 0) {
+            res.status(404).json({msg:`no se pudo eliminar el registro con el id ${id}`})
+            return
+        }
+        res.json({msg: `El usuario con id ${id} se elimino correctamente.`})
+        //lo del cath y final siempre sera lo mismo
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error})
+    }finally{
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+module.exports = {getUsers, getUserByID, deleteUserByID}
