@@ -82,5 +82,83 @@ const deleteUserByID = async (req = request, res = response) =>{
     }
 }
 
+const addUser = async (req = request, res = response) =>{
+    //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
+    const {
+        Usuario,
+        Nombre,
+        Apellidos,
+        Edad,
+        Genero,
+        Contraseña,
+        Fecha_nacimiento,
+        Activo
+       
+    } = req.body
 
-module.exports = {getUsers, getUserByID, deleteUserByID}
+    if (
+        !Usuario||
+        !Nombre||
+        !Apellidos||
+        !Edad||
+        !Genero||
+        !Contraseña||
+        !Fecha_nacimiento||
+        !Activo
+       
+    ){
+        res.status(400).json({msg:"Falta informacion del usuario"})
+        return
+    }
+
+    let conn;
+    //control de exepciones
+    try {
+        conn = await pool.getConnection()
+
+        //tarea aqui que el usuario no se duplique
+
+        //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
+        const {affectedRows} = await conn.query(`
+            INSERT INTO Usuarios(
+                Usuario,
+                Nombre,
+                Apellidos,
+                Edad,
+                Genero,
+                Contraseña,
+                Fecha_nacimiento,
+                Activo
+                
+            ) VALUES(
+                '${Usuario}',
+                '${Nombre}',
+                '${Apellidos}',
+                ${Edad},
+                '${Genero}',
+                '${Contraseña}',
+                '${Fecha_nacimiento}',
+                '${Activo}'
+               
+            )
+            `, (error) => {throw new Error(error) })
+        
+        //siempre validar que no se obtuvieron resultados
+        if (affectedRows === 0) {
+            res.status(404).json({msg:`no se pudo agregar el registro del usuario ${Usuario}`})
+            return
+        }
+        res.json({msg: `El usuario ${Usuario} se agrego correctamente.`})
+        //lo del cath y final siempre sera lo mismo
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error})
+    }finally{
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+module.exports = {getUsers, getUserByID, deleteUserByID, addUser}
