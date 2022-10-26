@@ -91,7 +91,7 @@ const addUser = async (req = request, res = response) =>{
         Edad,
         Genero,
         Contraseña,
-        Fecha_nacimiento,
+        Fecha_nacimiento = '1900-01-01',
         Activo
        
     } = req.body
@@ -101,9 +101,9 @@ const addUser = async (req = request, res = response) =>{
         !Nombre||
         !Apellidos||
         !Edad||
-        !Genero||
+
         !Contraseña||
-        !Fecha_nacimiento||
+
         !Activo
        
     ){
@@ -117,17 +117,21 @@ const addUser = async (req = request, res = response) =>{
         conn = await pool.getConnection()
 
         //tarea aqui que el usuario no se duplique
+       const [user] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}'`)
 
+       if (user){
+        res.status(403).json({msg: `El usuario ${Usuario} ya existe`})
+       }
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
         const {affectedRows} = await conn.query(`
-            INSERT INTO Usuarios(
+            INSERT INTO Usuarios(   
                 Usuario,
                 Nombre,
                 Apellidos,
                 Edad,
                 Genero,
                 Contraseña,
-                Fecha_nacimiento,
+                Fecha_nacimiento, 
                 Activo
                 
             ) VALUES(
@@ -135,14 +139,14 @@ const addUser = async (req = request, res = response) =>{
                 '${Nombre}',
                 '${Apellidos}',
                 ${Edad},
-                '${Genero}',
+                '${Genero || ''}',
                 '${Contraseña}',
                 '${Fecha_nacimiento}',
                 '${Activo}'
                
             )
             `, (error) => {throw new Error(error) })
-        
+            //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {
             res.status(404).json({msg:`no se pudo agregar el registro del usuario ${Usuario}`})
