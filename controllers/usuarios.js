@@ -1,6 +1,6 @@
 const { request, response } = require("express");
 const pool = require("../db/connection")
-
+const bcryptjs= require("bcryptjs")
 const getUsers = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD
     
@@ -84,12 +84,12 @@ const deleteUserByID = async (req = request, res = response) =>{
 
 const addUser = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
-    const {
+    const{
         Usuario,
         Nombre,
         Apellidos,
         Edad,
-        Genero,
+        Genero = '',
         Contraseña,
         Fecha_nacimiento = '1900-01-01',
         Activo
@@ -110,44 +110,48 @@ const addUser = async (req = request, res = response) =>{
         res.status(400).json({msg:"Falta informacion del usuario"})
         return
     }
-
+  
     let conn;
     //control de exepciones
     try {
         conn = await pool.getConnection()
-
+        
         //tarea aqui que el usuario no se duplique
-       const [user] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}'`)
+       const user = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}'`)
 
        if (user){
-        res.status(403).json({msg: `El usuario ${Usuario} ya existe`})
+        res.status(403).json({msg: `El usuario ${Usuario} ya esta registrado`})
+       return
        }
+       const salt = bcryptjs.genSaltSync()
+       const ContraseñaCifrada = bcryptjs.hashSync(Contraseña,salt)
+
+       
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
         const {affectedRows} = await conn.query(`
-            INSERT INTO Usuarios(   
+            INSERT INTO Usuarios(
                 Usuario,
                 Nombre,
                 Apellidos,
                 Edad,
                 Genero,
                 Contraseña,
-                Fecha_nacimiento, 
-                Activo
-                
-            ) VALUES(
+                Fecha_nacimiento,
+                Activo)
+                VALUES(
                 '${Usuario}',
                 '${Nombre}',
                 '${Apellidos}',
                 ${Edad},
                 '${Genero || ''}',
-                '${Contraseña}',
+                '${ContraseñaCifrada}',
                 '${Fecha_nacimiento}',
-                '${Activo}'
-               
-            )
-            `, (error) => {throw new Error(error) })
+                '${Activo}'               
+                
+            )`,(error) => {throw new Error(error)})
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
+       
         if (affectedRows === 0) {
             res.status(404).json({msg:`no se pudo agregar el registro del usuario ${Usuario}`})
             return
@@ -159,7 +163,7 @@ const addUser = async (req = request, res = response) =>{
         res.status(500).json({error})
     }finally{
         if(conn){
-            conn.end()
+        conn.end()
         }
     }
 }
@@ -232,5 +236,52 @@ const updateUserByUsuario = async (req = request, res = response) =>{
     }
 }
 
+const singIn = async (req = request, res = response) =>{
+    //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
+    const {
+        Usuario,
+        Contraseña
+    } = req.body
 
-module.exports = {getUsers, getUserByID, deleteUserByID, addUser, updateUserByUsuario}
+    if (
+        !Usuario||
+        !Contraseña
+    ){
+        res.status(400).json({msg:"Falta informacion del usuario"})
+        return
+    }
+
+    let conn;
+    //control de exepciones
+    try {
+        conn = await pool.getConnection()
+
+        //tarea aqui que el usuario no se duplique
+       const [user] = await conn.query(`SELECT Usuario, Contraseña, Activo FROM Usuarios WHERE Usuario = '${Usuario}'`)
+
+       if (!user || user.Activo === 'N'){
+        let code = !user  ? 1 : 2
+        res.status(403).json({msg: `El usuario o la contraseña son incorrectos`})
+        return
+       }
+       const accesoValido = bcryptjs.compareSync(Contraseña, user.Contraseña)
+       if (!accesoValido){
+        
+            res.status(403).json({msg: `El usuario o la contraseña son incorrectos`, errorCode: "3"})
+            return
+           
+       }
+        res.json({msg: `El usuario ${Usuario} ha iniciado secion`})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error})
+    }finally{
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+
+module.exports = {getUsers, getUserByID, deleteUserByID, addUser, updateUserByUsuario, singIn}
