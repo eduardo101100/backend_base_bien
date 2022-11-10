@@ -1,6 +1,7 @@
 const { request, response } = require("express");
 const pool = require("../db/connection")
-const bcryptjs= require("bcryptjs")
+const bcryptjs= require("bcryptjs");
+const modeloUsuarios = require("../models/usuarios");
 const getUsers = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD
     
@@ -9,7 +10,7 @@ const getUsers = async (req = request, res = response) =>{
     try {
         conn = await pool.getConnection()
         //esta es la consulta mas basica, se pueden hacer mas complejas
-        const users = await conn.query("SELECT * FROM Usuarios", (error) => {throw new Error(error) })
+        const users = await conn.query(modeloUsuarios.quieryGetUsers, (error) => {throw new Error(error) })
         //siempre validar que no se obtuvieron resultados
         if (!users) {
             res.status(404).json({msg:"no se encontraron registros"})
@@ -36,7 +37,7 @@ const getUserByID = async (req = request, res = response) =>{
     try {
         conn = await pool.getConnection()
         //esta es la consulta mas basica, se pueden hacer mas complejas
-        const [user] = await conn.query(`SELECT * FROM Usuarios WHERE ID = ${id}`, (error) => {throw new Error(error) })
+        const [user] = await conn.query(modeloUsuarios.quieryGetUsersByeID, [id], (error) => {throw new Error(error) })
         //siempre validar que no se obtuvieron resultados
         if (!user) {
             res.status(404).json({msg:`no se encontro registro con el id ${id}`})
@@ -63,7 +64,7 @@ const deleteUserByID = async (req = request, res = response) =>{
     try {
         conn = await pool.getConnection()
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
-        const {affectedRows} = await conn.query(`UPDATE Usuarios SET Activo = 'N' WHERE ID = ${id}`, (error) => {throw new Error(error) })
+        const {affectedRows} = await conn.query(modeloUsuarios.quieryDeleteUsersByeID, [id], (error) => {throw new Error(error) })
         
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {
@@ -89,7 +90,7 @@ const addUser = async (req = request, res = response) =>{
         Nombre,
         Apellidos,
         Edad,
-        Genero = '',
+        Genero,
         Contraseña,
         Fecha_nacimiento = '1900-01-01',
         Activo
@@ -117,38 +118,29 @@ const addUser = async (req = request, res = response) =>{
         conn = await pool.getConnection()
         
         //tarea aqui que el usuario no se duplique
-       const user = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}'`)
-
-       if (user){
-        res.status(403).json({msg: `El usuario ${Usuario} ya esta registrado`})
-       return
-       }
+       const user = await conn.query(modeloUsuarios.quieryUsersExists,[Usuario])
+       
+        if(!user){
+            res.status(403).json({msg: `El Usuario ${Usuario} ya se encuentra registrado`})
+            return
+        }
+  
+       
        const salt = bcryptjs.genSaltSync()
        const ContraseñaCifrada = bcryptjs.hashSync(Contraseña,salt)
 
        
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
-        const {affectedRows} = await conn.query(`
-            INSERT INTO Usuarios(
-                Usuario,
-                Nombre,
-                Apellidos,
-                Edad,
-                Genero,
-                Contraseña,
-                Fecha_nacimiento,
-                Activo)
-                VALUES(
-                '${Usuario}',
-                '${Nombre}',
-                '${Apellidos}',
-                ${Edad},
-                '${Genero || ''}',
-                '${ContraseñaCifrada}',
-                '${Fecha_nacimiento}',
-                '${Activo}'               
-                
-            )`,(error) => {throw new Error(error)})
+        const {affectedRows} = await conn.query(modeloUsuarios.quieryAddUser, [
+            Usuario,
+            Nombre,
+            Apellidos,
+            Edad,
+            Genero || '',
+            ContraseñaCifrada,
+            Fecha_nacimiento, 
+            Activo
+        ], (error) => {throw new Error(error)})
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
        
@@ -199,25 +191,23 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         conn = await pool.getConnection()
 
         //tarea aqui que el usuario no se duplique
-       const [user] = await conn.query(`
-       SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_nacimiento
-        FROM Usuarios 
-        WHERE Usuario = '${Usuario}'`)
+       const [user] = await conn.query(modeloUsuarios.quieryGetUsersInfo,[Usuario])
 
        if (!user){
         res.status(403).json({msg: `El usuario ${Usuario} no se encuentra registrado`})
        }
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
-        const {affectedRows} = await conn.query(`
-            UPDATE Usuarios SET 
-                Nombre = '${Nombre || user.Nombre}',
-                Apellidos ='${Apellidos || user.Apellidos}',
-                Edad =  ${Edad || user.Edad},
-                Genero = '${Genero || user.Genero}',
-                Fecha_nacimiento ='${Fecha_nacimiento}'
-                WHERE Usuario = '${Usuario}'
- 
-            `, (error) => {throw new Error(error) })
+        //arreglar esta
+        const {affectedRows} = await conn.query(modeloUsuarios.quieryUpdateByeUsuario,[
+            Usuario,
+            Nombre || user.Nombre,
+            Apellidos ||user.Apellidos,
+            Edad || user.Edad,
+            Genero || user.Genero,
+            Fecha_nacimiento
+            
+            ]
+            , (error) => {throw new Error(error) })
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {
@@ -257,11 +247,11 @@ const singIn = async (req = request, res = response) =>{
         conn = await pool.getConnection()
 
         //tarea aqui que el usuario no se duplique
-       const [user] = await conn.query(`SELECT Usuario, Contraseña, Activo FROM Usuarios WHERE Usuario = '${Usuario}'`)
+       const [user] = await conn.query(modeloUsuarios.quierySinin,[Usuario])
 
        if (!user || user.Activo === 'N'){
-        let code = !user  ? 1 : 2
-        res.status(403).json({msg: `El usuario o la contraseña son incorrectos`})
+        let code = !user? 1 : 2
+        res.status(405).json({msg: `El usuario o la contraseña son incorrectos`, errorCode: code})
         return
        }
        const accesoValido = bcryptjs.compareSync(Contraseña, user.Contraseña)
