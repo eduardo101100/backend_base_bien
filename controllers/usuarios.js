@@ -2,6 +2,8 @@ const { request, response } = require("express");
 const pool = require("../db/connection")
 const bcryptjs= require("bcryptjs");
 const modeloUsuarios = require("../models/usuarios");
+const { use } = require("../routes/usuarios");
+
 const getUsers = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD
     
@@ -86,25 +88,21 @@ const deleteUserByID = async (req = request, res = response) =>{
 const addUser = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
     const{
-        Usuario,
-        Nombre,
-        Apellidos,
-        Edad,
-        Genero,
-        Contraseña,
-        Fecha_nacimiento = '1900-01-01',
+        Enemigos,
+        Armas,
+        Armaduras,
+        Nivel,
+        Nivel_Recomendado,
         Activo
        
     } = req.body
 
     if (
-        !Usuario||
-        !Nombre||
-        !Apellidos||
-        !Edad||
-
-        !Contraseña||
-
+        !Enemigos||
+        !Armas||
+        !Armaduras||
+        !Nivel||
+        !Nivel_Recomendado||
         !Activo
        
     ){
@@ -118,37 +116,29 @@ const addUser = async (req = request, res = response) =>{
         conn = await pool.getConnection()
         
         //tarea aqui que el usuario no se duplique
-       const user = await conn.query(modeloUsuarios.quieryUsersExists,[Usuario])
+       const user = await conn.query(modeloUsuarios.quieryUsersExists,[Enemigos])
        
         if(!user){
-            res.status(403).json({msg: `El Usuario ${Usuario} ya se encuentra registrado`})
+            res.status(403).json({msg: `El personaje ${Enemigos} ya se encuentra registrado`})
             return
         }
-  
-       
-       const salt = bcryptjs.genSaltSync()
-       const ContraseñaCifrada = bcryptjs.hashSync(Contraseña,salt)
-
-       
-        //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
+             //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
         const {affectedRows} = await conn.query(modeloUsuarios.quieryAddUser, [
-            Usuario,
-            Nombre,
-            Apellidos,
-            Edad,
-            Genero || '',
-            ContraseñaCifrada,
-            Fecha_nacimiento, 
+            Enemigos,
+            Armas,
+            Armaduras,
+            Nivel,
+            Nivel_Recomendado,
             Activo
         ], (error) => {throw new Error(error)})
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
        
         if (affectedRows === 0) {
-            res.status(404).json({msg:`no se pudo agregar el registro del usuario ${Usuario}`})
+            res.status(404).json({msg:`no se pudo agregar el registro del usuario ${Enemigos}`})
             return
         }
-        res.json({msg: `El usuario ${Usuario} se agrego correctamente.`})
+        res.json({msg: `El usuario ${Enemigos} se agrego correctamente.`})
         //lo del cath y final siempre sera lo mismo
     } catch (error) {
         console.log(error)
@@ -163,25 +153,22 @@ const addUser = async (req = request, res = response) =>{
 const updateUserByUsuario = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD este indica el numero estatico
     const {
-        Usuario,
-        Nombre,
-        Apellidos,
-        Edad,
-        Genero,
-        Contraseña,
-        Fecha_nacimiento = "1900-01-01"
-        
-       
+        Enemigos,
+        Armas,
+        Armaduras,
+        Nivel,
+        Nivel_Recomendado
+
     } = req.body
 
     if (
-        !Usuario||
-        !Nombre||
-        !Apellidos||
-        !Edad||
-        !Contraseña       
+        !Enemigos||
+        !Armas||
+        !Armaduras||
+        !Nivel||
+        !Nivel_Recomendado   
     ){
-        res.status(400).json({msg:"Falta informacion del usuario"})
+        res.status(400).json({msg:"Falta informacion del personaje"})
         return
     }
 
@@ -191,30 +178,28 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         conn = await pool.getConnection()
 
         //tarea aqui que el usuario no se duplique
-       const [user] = await conn.query(modeloUsuarios.quieryGetUsersInfo,[Usuario])
+       const [user] = await conn.query(modeloUsuarios.quieryGetUsersInfo,[Enemigos])
 
        if (!user){
-        res.status(403).json({msg: `El usuario ${Usuario} no se encuentra registrado`})
+        res.status(403).json({msg: `El usuario ${Enemigos} no se encuentra registrado`})
        }
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
         //arreglar esta
         const {affectedRows} = await conn.query(modeloUsuarios.quieryUpdateByeUsuario,[
-            Usuario,
-            Nombre || user.Nombre,
-            Apellidos ||user.Apellidos,
-            Edad || user.Edad,
-            Genero || user.Genero,
-            Fecha_nacimiento
-            
+            Armas|| user.Armas,
+            Armaduras|| user.Armaduras,
+            Nivel|| user.Nivel,
+            Nivel_Recomendado|| user.Nivel_Recomendado,
+            Enemigos,
             ]
             , (error) => {throw new Error(error) })
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {
-            res.status(404).json({msg:`no se pudo actualizar el registro del usuario ${Usuario}`})
+            res.status(404).json({msg:`no se pudo actualizar el registro del personaje ${Enemigos}`})
             return
         }
-        res.json({msg: `El usuario ${Usuario} se actualizo correctamente.`})
+        res.json({msg: `El personaje ${Enemigos} se actualizo correctamente.`})
         //lo del cath y final siempre sera lo mismo
     } catch (error) {
         console.log(error)
