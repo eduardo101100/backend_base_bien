@@ -1,4 +1,4 @@
-const modeloUsuarios ={
+const modeloAsesinos ={
 quieryGetUsers: "SELECT * FROM Assasins",
 
 //se sustituye cada elemento del arreglo por cada signo de interrogacion, y se acomodan en el orden respectivo
@@ -35,4 +35,4 @@ WHERE Enemigos = ?
 `
 }
 
-module.exports = modeloUsuarios
+module.exports = modeloAsesinos

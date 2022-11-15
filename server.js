@@ -1,6 +1,5 @@
 const express = require('express')
-const menssagesRouter = require('./routes/messages')
-const usuariosRouter = require('./routes/usuarios')
+const usuariosRouter = require('./routes/asesinos')
 const cors = require("cors")
 
 class Server {
@@ -8,7 +7,6 @@ class Server {
         this.app = express();
         this.PORT = process.env.PORT
         this.paths = {
-            messages: "/api/v1/messages",
             usuarios:"/api/v1/juego"
         }
         this.middlewares()
@@ -21,7 +19,7 @@ class Server {
         
         }) //end point
     */
-    this.app.use(this.paths.messages, menssagesRouter)
+
     this.app.use(this.paths.usuarios, usuariosRouter)
     }
 
