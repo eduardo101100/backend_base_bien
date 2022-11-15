@@ -9,7 +9,7 @@ class Server {
         this.PORT = process.env.PORT
         this.paths = {
             messages: "/api/v1/messages",
-            usuarios:"/api/v1/usuarios"
+            usuarios:"/api/v1/juego"
         }
         this.middlewares()
         this.routes()

@@ -3,8 +3,8 @@ const {getUsers, getUserByID, deleteUserByID, addUser, updateUserByUsuario, sing
 const router = Router()
 
 //http://localhost:4000/api/v1/usuarios
-//http://localhost:4000/api/v1/usuarios/id/2
-//http://localhost:4000/api/v1/usuarios?id=1
+//http://localhost:4000/api/v1/juego/id/2
+//http://localhost:4000/api/v1/juego?id=1
 
 //GET
 router.get("/", getUsers)
