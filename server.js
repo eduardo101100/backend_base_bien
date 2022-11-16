@@ -1,5 +1,6 @@
 const express = require('express')
-const usuariosRouter = require('./routes/asesinos')
+const AsesinosRouter = require('./routes/asesinos')
+const usuariosRouter = require('./routes/usuarios')
 const cors = require("cors")
 
 class Server {
@@ -7,7 +8,8 @@ class Server {
         this.app = express();
         this.PORT = process.env.PORT
         this.paths = {
-            usuarios:"/api/v1/juego"
+            Asesinos:"/api/v1/juego",
+            usuarios:"/api/v1/usuarios"
         }
         this.middlewares()
         this.routes()
@@ -20,6 +22,7 @@ class Server {
         }) //end point
     */
 
+    this.app.use(this.paths.Asesinos, AsesinosRouter)
     this.app.use(this.paths.usuarios, usuariosRouter)
     }
 
