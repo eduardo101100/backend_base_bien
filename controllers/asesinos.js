@@ -115,9 +115,9 @@ const addUser = async (req = request, res = response) =>{
         conn = await pool.getConnection()
         
         //tarea aqui que el usuario no se duplique
-       const user = await conn.query(modelojuego.quieryUsersExists,[Enemigos])
+       const [user] = await conn.query(modelojuego.quieryUsersExists,[Enemigos])
        
-        if(!user){
+        if(user){
             res.status(403).json({msg: `El personaje ${Enemigos} ya se encuentra registrado`})
             return
         }

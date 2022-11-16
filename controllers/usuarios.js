@@ -118,7 +118,7 @@ const addUser = async (req = request, res = response) =>{
         conn = await pool.getConnection()
         
         //tarea aqui que el usuario no se duplique
-       const user = await conn.query(modeloUsuarios.quieryUsersExists,[Usuario])
+       const [user] = await conn.query(modeloUsuarios.quieryUsersExists,[Usuario],)
        
         if(!user){
             res.status(403).json({msg: `El Usuario ${Usuario} ya se encuentra registrado`})
@@ -168,7 +168,7 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         Apellidos,
         Edad,
         Genero,
-        Fecha_nacimiento = "1900-01-01"
+        Fecha_nacimiento= "1900-01-01"
         
        
     } = req.body
@@ -177,6 +177,8 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         !Usuario||
         !Nombre||
         !Apellidos||
+        !Genero||
+
         !Edad       
     ){
         res.status(400).json({msg:"Falta informacion del usuario"})
@@ -189,25 +191,22 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         conn = await pool.getConnection()
 
         //tarea aqui que el usuario no se duplique
-       const [user] = await conn.query(`
-       SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_nacimiento
-        FROM Usuarios 
-        WHERE Usuario = '${Usuario}'`)
+       const [user] = await conn.query(modeloUsuarios.quieryGetUsersInfo,[Usuario])
 
        if (!user){
         res.status(403).json({msg: `El usuario ${Usuario} no se encuentra registrado`})
        }
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
-        const {affectedRows} = await conn.query(`
-            UPDATE Usuarios SET 
-                Nombre = '${Nombre || user.Nombre}',
-                Apellidos ='${Apellidos || user.Apellidos}',
-                Edad =  ${Edad || user.Edad},
-                Genero = '${Genero || user.Genero}',
-                Fecha_nacimiento ='${Fecha_nacimiento}'
-                WHERE Usuario = '${Usuario}'
- 
-            `, (error) => {throw new Error(error) })
+        //arreglar esta
+        const {affectedRows} = await conn.query(modeloUsuarios.quieryUpdateByeUsuario,[
+            Nombre || user.Nombre,
+            Apellidos ||user.Apellidos,
+            Edad || user.Edad,
+            Genero || user.Genero,
+            Fecha_nacimiento,
+            Usuario
+            ]
+            , (error) => {throw new Error(error) })
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {

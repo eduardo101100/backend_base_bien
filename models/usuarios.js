@@ -5,7 +5,7 @@ quieryGetUsers: "SELECT * FROM Usuarios",
 //si se usa 2 veces se pasa las 2 veces
 quieryGetUsersByeID: `SELECT * FROM Usuarios WHERE ID = ?`,
 quieryDeleteUsersByeID: `UPDATE Usuarios SET Activo = 'N' WHERE ID = ?`,
-quieryUsersExists: `SELECT Usuario FROM Usuarios WHERE Usuario = ?`,
+quieryUsersExists: `SELECT Usuario FROM Usuarios WHERE Usuario = "?"`,
 quieryAddUser:`INSERT INTO Usuarios (
     Usuario,
     Nombre,
@@ -25,7 +25,19 @@ quieryAddUser:`INSERT INTO Usuarios (
     ?,
     ?)
     `,
-    
+    quieryGetUsersInfo: `
+SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_nacimiento
+ FROM Usuarios 
+ WHERE Usuario = ?`,
+ quieryUpdateByeUsuario: `
+ UPDATE Usuarios SET 
+     Nombre = ?,
+     Apellidos = ?,
+     Edad = ?,
+     Genero = ?,
+     Fecha_nacimiento = ?
+     WHERE Usuario = ?
+     `,
  quierySinin:`SELECT Usuario, Contraseña, Activo FROM Usuarios WHERE Usuario = ?`
 }
 
