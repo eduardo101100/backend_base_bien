@@ -1,7 +1,7 @@
 const { request, response } = require("express");
 const pool = require("../db/connection")
 const bcryptjs= require("bcryptjs");
-const modeloUsuarios = require("../models/usuarios");
+const {modeloUsuarios, updateUsuario} = require("../models/usuarios");
 const getUsers = async (req = request, res = response) =>{
     //estructura basica de cualquier endpoint al conectar en su BD
     
@@ -168,7 +168,8 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         Apellidos,
         Edad,
         Genero,
-        Fecha_nacimiento= "1900-01-01"
+        Contraseña,
+        Fecha_nacimiento = "1900-01-01"
         
        
     } = req.body
@@ -178,8 +179,8 @@ const updateUserByUsuario = async (req = request, res = response) =>{
         !Nombre||
         !Apellidos||
         !Genero||
-
-        !Edad       
+        !Edad||
+        !Contraseña   
     ){
         res.status(400).json({msg:"Falta informacion del usuario"})
         return
@@ -198,15 +199,14 @@ const updateUserByUsuario = async (req = request, res = response) =>{
        }
         //esta es la consulta mas basica, se pueden hacer mas complejas EN ESTA SE ACTUALIZARA EL USUARIO
         //arreglar esta
-        const {affectedRows} = await conn.query(modeloUsuarios.quieryUpdateByeUsuario,[
-            Nombre || user.Nombre,
-            Apellidos ||user.Apellidos,
-            Edad || user.Edad,
-            Genero || user.Genero,
-            Fecha_nacimiento,
-            Usuario
-            ]
-            , (error) => {throw new Error(error) })
+        const {affectedRows} = await conn.query(updateUsuario(
+        Nombre,
+        Apellidos,
+        Edad,
+        Genero,
+        Fecha_nacimiento,
+        Usuario              
+        ),(error) => {throw new Error(error) })
             //'${Genero || ''}',
         //siempre validar que no se obtuvieron resultados
         if (affectedRows === 0) {

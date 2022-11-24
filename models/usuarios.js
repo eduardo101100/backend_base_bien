@@ -40,5 +40,23 @@ SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_nacimiento
      `,
  quierySinin:`SELECT Usuario, Contraseña, Activo FROM Usuarios WHERE Usuario = ?`
 }
+const updateUsuario= (
+Nombre,
+Apellidos,
+Edad,
+Genero,
+Fecha_nacimiento,
+Usuario
+) => {
+    return `
+    UPDATE Usuarios SET
+    Nombre = '${Nombre}',
+    Apellidos = '${Apellidos}',
+    Edad = ${Edad},
+    ${Genero ? `Genero = '${Genero}'`: ''},
+    Fecha_nacimiento = '${Fecha_nacimiento}'
+    WHERE Usuario = '${Usuario}'
+    `
+}
 
-module.exports = modeloUsuarios
+module.exports = {modeloUsuarios, updateUsuario}
